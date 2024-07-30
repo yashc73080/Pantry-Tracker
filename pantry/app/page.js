@@ -44,7 +44,8 @@ export default function Home() {
   }, [])
 
   const addItem = async (item) => {
-    const docRef = doc(collection(firestore, 'pantry'), item)
+    const normalizedItem = item.toLowerCase();
+    const docRef = doc(collection(firestore, 'pantry'), normalizedItem)
     // Check if exists
     const docSnap = await getDoc(docRef)
     if (docSnap.exists()) {
@@ -59,7 +60,8 @@ export default function Home() {
   }
 
   const removeItem = async (item) => {
-    const docRef = doc(collection(firestore, 'pantry'), item)
+    const normalizedItem = item.toLowerCase();
+    const docRef = doc(collection(firestore, 'pantry'), normalizedItem)
     const docSnap = await getDoc(docRef)
     if (docSnap.exists()) {
       const {count} = docSnap.data()
