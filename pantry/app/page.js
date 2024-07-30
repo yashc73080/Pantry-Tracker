@@ -1,7 +1,7 @@
 'use client'
 import {Box, Stack, Typography, Button, Modal, TextField} from '@mui/material'
 import {firestore} from '@/firebase' 
-import {collection, query, getDocs, doc, setDoc} from 'firebase/firestore'
+import {collection, query, getDocs, doc, setDoc, deleteDoc} from 'firebase/firestore'
 import {useEffect, useState} from 'react'
 
 const style = {
@@ -46,7 +46,13 @@ export default function Home() {
   const addItem = async (item) => {
     const docRef = doc(collection(firestore, 'pantry'), item)
     await setDoc(docRef, {})
-    updatePantry()
+    await updatePantry()
+  }
+
+  const removeItem = async (item) => {
+    const docRef = doc(collection(firestore, 'pantry'), item)
+    await deleteDoc(docRef)
+    await updatePantry()
   }
 
   return (
@@ -104,22 +110,26 @@ export default function Home() {
         <Stack width="800px" height="300px" spacing={2} overflow="auto">
 
           {pantry.map((i) => (
-            <Box
-              key={i}
-              width="100%"
-              minHeight="150px"
-              display={"flex"}
-              justifyContent={"center"}
-              alignItems={"center"}
-              bgcolor={"#f0f0f0"}
-            >
-              <Typography variant={'h3'} color={'#333'} textAlign={'center'}>
-                  {
-                    // Capitalize the first letter of the item
-                    i.charAt(0).toUpperCase() + i.slice(1) 
-                  }
+              <Box
+                key={i}
+                width="100%"
+                minHeight="150px"
+                display={"flex"}
+                justifyContent={"space-between"}
+                alignItems={"center"}
+                bgcolor={"#f0f0f0"}
+                paddingX={5}
+              >
+                <Typography variant={'h3'} color={'#333'} textAlign={'center'}>
+                    {
+                      i.charAt(0).toUpperCase() + i.slice(1) 
+                    }
                 </Typography>
-            </Box>
+              <Button variant='contained' onClick={() => removeItem(i)}>
+                Remove
+              </Button>
+              
+              </Box>
           ))}
         </Stack>
       </Box>
