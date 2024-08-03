@@ -33,13 +33,17 @@ const useAuth = () => {
     }
   };
 
-  const handleGoogleSignIn = () => async (onClose) => {
+  const handleGoogleSignIn = async (onClose) => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      // The signed-in user info.
+      const user = result.user;
+      setUser(user);
       setError('');
       if (onClose) onClose(); // Close the modal
     } catch (error) {
-      handleError(error);
+      console.error("Error during Google Sign-In:", error);
+      setError('An error occurred during Google Sign-In. Please try again.');
     }
   };
 

@@ -51,13 +51,17 @@ export default function Home() {
   };
 
   const updatePantry = async () => {
-    const snapshot = query(collection(firestore, 'pantry'));
-    const docs = await getDocs(snapshot);
-    const pantryList = [];
-    docs.forEach((doc) => {
-      pantryList.push({ name: doc.id, ...doc.data() });
-    });
-    setPantry(pantryList);
+    if (user) {
+      const userPantryRef = collection(firestore, 'users', user.uid, 'pantry');
+      const snapshot = await getDocs(query(userPantryRef));
+      const pantryList = [];
+      snapshot.forEach((doc) => {
+        pantryList.push({ name: doc.id, ...doc.data() });
+      });
+      setPantry(pantryList);
+    } else {
+      setPantry([]);
+    }
   };
 
   useEffect(() => {
@@ -69,31 +73,35 @@ export default function Home() {
   }, [user]);
 
   const addItem = async (item) => {
-    const normalizedItem = item.toLowerCase();
-    const docRef = doc(collection(firestore, 'pantry'), normalizedItem);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      const { count } = docSnap.data();
-      await setDoc(docRef, { count: count + 1 });
-    } else {
-      await setDoc(docRef, { count: 1 });
+    if (user) {
+      const normalizedItem = item.toLowerCase();
+      const itemRef = doc(firestore, 'users', user.uid, 'pantry', normalizedItem);
+      const docSnap = await getDoc(itemRef);
+      if (docSnap.exists()) {
+        const { count } = docSnap.data();
+        await setDoc(itemRef, { count: count + 1 });
+      } else {
+        await setDoc(itemRef, { count: 1 });
+      }
+      await updatePantry();
     }
-    await updatePantry();
   };
 
   const removeItem = async (item) => {
-    const normalizedItem = item.toLowerCase();
-    const docRef = doc(collection(firestore, 'pantry'), normalizedItem);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      const { count } = docSnap.data();
-      if (count === 1) {
-        await deleteDoc(docRef);
-      } else {
-        await setDoc(docRef, { count: count - 1 });
+    if (user) {
+      const normalizedItem = item.toLowerCase();
+      const itemRef = doc(firestore, 'users', user.uid, 'pantry', normalizedItem);
+      const docSnap = await getDoc(itemRef);
+      if (docSnap.exists()) {
+        const { count } = docSnap.data();
+        if (count === 1) {
+          await deleteDoc(itemRef);
+        } else {
+          await setDoc(itemRef, { count: count - 1 });
+        }
       }
+      await updatePantry();
     }
-    await updatePantry();
   };
 
   return (
