@@ -1,6 +1,6 @@
 'use client';
-import { Box, Stack, Typography, Button, Modal, TextField, AppBar, Toolbar, Paper, Chip, IconButton, Badge } from '@mui/material';
-import { AccountCircle } from '@mui/icons-material';
+import { Box, Stack, Typography, Button, Modal, TextField, AppBar, Toolbar, Paper, Chip, IconButton, Badge, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
+import { AccountCircle, Search } from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { firestore } from '@/firebase';
@@ -33,6 +33,10 @@ export default function Home() {
   const [password, setPassword] = useState('');
 
   const { user, error, handleSignUp, handleLogin, handleGoogleSignIn, handleLogout, setError } = useAuth();
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedFilter, setSelectedFilter] = useState('All');
+  const [itemDescription, setItemDescription] = useState('');
 
   const handleOpen = () => {
     if (user) {
@@ -78,10 +82,10 @@ export default function Home() {
       const itemRef = doc(firestore, 'users', user.uid, 'pantry', normalizedItem);
       const docSnap = await getDoc(itemRef);
       if (docSnap.exists()) {
-        const { count } = docSnap.data();
-        await setDoc(itemRef, { count: count + 1 });
+        const { count, description } = docSnap.data();
+        await setDoc(itemRef, { count: count + 1, description });
       } else {
-        await setDoc(itemRef, { count: 1 });
+        await setDoc(itemRef, { count: 1, description: itemDescription });
       }
       await updatePantry();
     }
@@ -104,8 +108,14 @@ export default function Home() {
     }
   };
 
+  const filteredPantry = pantry.filter(item =>
+    item.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (selectedFilter === 'All' || item.description === selectedFilter)
+  );
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+
       <AppBar position="fixed" sx={{ bgcolor: "primary.main", boxShadow: 1 }}>
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: 'black' }}>
@@ -181,126 +191,78 @@ export default function Home() {
         </Toolbar>
       </AppBar>
 
-      <Box
-        sx={{
-          flexGrow: 1,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          pt: 8,
-        }}
-      >
-        <Paper
-          elevation={3}
-          sx={{
-            width: '800px',
-            height: '600px',
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            transition: 'all 0.3s ease-in-out',
-            '&:hover': {
-              transform: 'scale(1.02)',
-              boxShadow: '0 8px 40px rgba(0,0,0,0.12)',
-              bgcolor: '#f7f7f7',
-            },
-          }}
-        >
-          <Box
-            sx={{
-              bgcolor: '#ADD8E6',
-              p: 2,
-              transition: 'background-color 0.3s ease-in-out',
-              ':hover': {
-                bgcolor: '#9CC8D6',
-              },
-            }}
-          >
+      <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', pt: 8 }}>
+        <Paper elevation={3} sx={{ width: '800px', height: '600px', display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'all 0.3s ease-in-out',
+            '&:hover': { transform: 'scale(1.02)', boxShadow: '0 8px 40px rgba(0,0,0,0.12)', bgcolor: '#f7f7f7' } }}>
+          <Box sx={{ bgcolor: '#ADD8E6', p: 2, transition: 'background-color 0.3s ease-in-out', ':hover': { bgcolor: '#9CC8D6' } }}>
             <Typography variant="h4" align="center" sx={{ color: '#333' }}>
               Pantry Items
             </Typography>
           </Box>
 
+          <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <TextField
+              variant="outlined"
+              placeholder="Search items..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              InputProps={{
+                startAdornment: <Search />,
+              }}
+            />
+            <Select
+              value={selectedFilter}
+              onChange={(e) => setSelectedFilter(e.target.value)}
+            >
+              <MenuItem value="All">All</MenuItem>
+              <MenuItem value="Fruit">Fruit</MenuItem>
+              <MenuItem value="Vegetable">Vegetable</MenuItem>
+              <MenuItem value="Dairy">Dairy</MenuItem>
+              <MenuItem value="Grain">Grain</MenuItem>
+              <MenuItem value="Other">Other</MenuItem>
+            </Select>
+          </Box>
+
           <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
             <Stack spacing={2}>
-              {pantry.map(({ name, count }) => (
-                <Paper
-                  key={name}
-                  elevation={1}
-                  sx={{
-                    p: 2,
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
+              {filteredPantry.map(({ name, count, description }) => (
+                <Paper key={name} elevation={1} sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                     transition: 'all 0.2s ease-in-out',
-                    '&:hover': {
-                      transform: 'translateX(5px)',
-                      boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                    },
-                  }}
+                    '&:hover': { transform: 'translateX(5px)', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' } }}
                 >
-                  <Typography variant="h6">
-                    {name.charAt(0).toUpperCase() + name.slice(1)}
-                  </Typography>
+                  <Box>
+                    <Typography variant="h6">
+                      {name.charAt(0).toUpperCase() + name.slice(1)}
+                    </Typography>
+                    <Typography variant="caption">{description}</Typography>
+                  </Box>
+
                   <Box display="flex" alignItems="center" gap={1}>
-                    <Button
-                      size="small"
-                      onClick={() => removeItem(name)}
-                      sx={{
-                        minWidth: '36px',
-                        height: '36px',
-                        borderRadius: '50%',
-                        p: 0,
-                      }}
-                    >
+                    <Button size="small" onClick={() => removeItem(name)} sx={{ minWidth: '36px', height: '36px', borderRadius: '50%', p: 0 }}>
                       <RemoveIcon />
                     </Button>
-                    <Chip
-                      label={count}
-                      color="primary"
-                      sx={{
-                        height: '36px',
-                        width: '50px',
-                        borderRadius: '18px',
-                        fontSize: '1rem',
-                        fontWeight: 'bold',
-                      }}
-                    />
-                    <Button
-                      size="small"
-                      onClick={() => addItem(name)}
-                      sx={{
-                        minWidth: '36px',
-                        height: '36px',
-                        borderRadius: '50%',
-                        p: 0,
-                      }}
-                    >
+
+                    <Chip label={count} color="primary" sx={{ height: '36px', width: '50px', borderRadius: '18px', fontSize: '1rem', fontWeight: 'bold' }}/>
+                    
+                    <Button size="small" onClick={() => addItem(name)} sx={{ minWidth: '36px', height: '36px', borderRadius: '50%', p: 0 }}>
                       <AddIcon />
                     </Button>
                   </Box>
+
                 </Paper>
               ))}
             </Stack>
           </Box>
 
           <Box sx={{ p: 2, borderTop: '1px solid #e0e0e0' }}>
-            <Button
-              variant="contained"
-              fullWidth
-              onClick={handleOpen}
-              sx={{
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                },
-              }}
-            >
+            <Button variant="contained" fullWidth onClick={handleOpen} sx={{ transition: 'all 0.2s ease-in-out',
+                '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 4px 20px rgba(0,0,0,0.15)' } }}>
               Add Item
             </Button>
           </Box>
+
         </Paper>
+
       </Box>
 
       <Modal
@@ -319,15 +281,35 @@ export default function Home() {
             variant="outlined"
             fullWidth
             value={itemName}
-            onChange={(e) => setItemName(e.target.value)}
+            onChange={(e) => 
+              setItemName(e.target.value)
+            }
           />
+          <FormControl fullWidth sx={{ mt: 2 }}>
+            <InputLabel id="description-label">Description</InputLabel>
+            <Select
+            labelId="description-label"
+              value={itemDescription}
+              onChange={(e) => setItemDescription(e.target.value)}
+              label="Description"
+            >
+              <MenuItem value="Fruit">Fruit</MenuItem>
+              <MenuItem value="Vegetable">Vegetable</MenuItem>
+              <MenuItem value="Dairy">Dairy</MenuItem>
+              <MenuItem value="Grain">Grain</MenuItem>
+              <MenuItem value="Other">Other</MenuItem>
+            </Select>
+          </FormControl>
+
           <Button
             variant="contained"
             onClick={() => {
               addItem(itemName);
               setItemName('');
+              setItemDescription('');
               handleClose();
             }}
+            sx={{ mt: 2 }}
           >
             Add
           </Button>
