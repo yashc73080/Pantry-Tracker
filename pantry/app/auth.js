@@ -13,37 +13,31 @@ const useAuth = () => {
     return () => unsubscribe();
   }, []);
 
-  const handleSignUp = async (email, password) => {
+  const handleSignUp = async (email, password, onClose) => {
     try {
-      await signUp(email, password);
-      console.log('Signed up successfully!');
-      alert('Signed up successfully!');
-      handleClose(); // Close the modal after successful sign-up
-    } catch (error) {
-      if (error.code === 'auth/email-already-in-use') {
-        alert('An account already exists with this email.');
-      } else if (error.code === 'auth/weak-password') {
-        alert('Password should be at least 6 characters');
-      } else {
-        console.error('Error signing up:', error);
-      }
-    }
-  };
-
-  const handleLogin = async (email, password) => {
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await createUserWithEmailAndPassword(auth, email, password);
       setError('');
-      handleClose()
+      if (onClose) onClose(); // Close the modal
     } catch (error) {
       handleError(error);
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleLogin = async (email, password, onClose) => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      setError('');
+      if (onClose) onClose(); // Close the modal
+    } catch (error) {
+      handleError(error);
+    }
+  };
+
+  const handleGoogleSignIn = () => async (onClose) => {
     try {
       await signInWithPopup(auth, googleProvider);
       setError('');
+      if (onClose) onClose(); // Close the modal
     } catch (error) {
       handleError(error);
     }
@@ -53,8 +47,12 @@ const useAuth = () => {
     try {
       await auth.signOut();
       setUser(null);
+      setError(''); // Clear any existing errors
+      return true; // Indicate successful logout
     } catch (error) {
       setError('Error signing out');
+      console.error('Logout error:', error);
+      return false; // Indicate failed logout
     }
   };
 
