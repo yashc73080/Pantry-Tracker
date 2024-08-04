@@ -1,5 +1,9 @@
 'use client';
-import { Box, Stack, Typography, Button, Modal, TextField, AppBar, Toolbar, Paper, Chip, IconButton, Badge, Select, MenuItem, InputLabel, FormControl, Alert } from '@mui/material';
+
+console.log("PantryClient component loaded");
+
+import { Box, Stack, Typography, Button, Modal, TextField, AppBar, Toolbar, Paper, Chip, IconButton, Badge, Select, 
+        MenuItem, InputLabel, FormControl, Alert } from '@mui/material';
 import { AccountCircle, Search } from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
