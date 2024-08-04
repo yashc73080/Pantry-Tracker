@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "preinstall": "rm -rf node_modules && rm -rf .next",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -17,10 +18,10 @@
     "express": "^4.19.2",
     "firebase": "^10.12.4",
     "firebase-admin": "^12.3.0",
-    "next": "14.2.5",
+    "next": "^14.2.5",
     "nodemon": "^3.1.4",
-    "react": "^18",
-    "react-dom": "^18",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "react-error-boundary": "^4.0.13"
   },
   "devDependencies": {
