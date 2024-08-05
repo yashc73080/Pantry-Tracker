@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { auth, googleProvider } from '@/firebase';
 import { onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 
@@ -13,7 +13,7 @@ const useAuth = () => {
     return () => unsubscribe();
   }, []);
 
-  const handleSignUp = async (email, password, onClose) => {
+  const handleSignUp = useCallback(async (email, password, onClose) => {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       setError('');
@@ -21,9 +21,9 @@ const useAuth = () => {
     } catch (error) {
       handleError(error);
     }
-  };
+  }, []);
 
-  const handleLogin = async (email, password, onClose) => {
+  const handleLogin = useCallback(async (email, password, onClose) => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       setError('');
@@ -31,9 +31,9 @@ const useAuth = () => {
     } catch (error) {
       handleError(error);
     }
-  };
+  }, []);
 
-  const handleGoogleSignIn = async (onClose) => {
+  const handleGoogleSignIn = useCallback(async (onClose) => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       // The signed-in user info.
@@ -43,11 +43,15 @@ const useAuth = () => {
       if (onClose) onClose(); // Close the modal
     } catch (error) {
       console.error("Error during Google Sign-In:", error);
-      setError('An error occurred during Google Sign-In. Please try again.');
+      if (error.code === 'auth/cancelled-popup-request') {
+        setError('Sign-in was cancelled. Please try again.');
+      } else {
+        setError('An error occurred during Google Sign-In. Please try again.');
+      }
     }
-  };
+  }, []);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     try {
       await auth.signOut();
       setUser(null);
@@ -58,9 +62,9 @@ const useAuth = () => {
       console.error('Logout error:', error);
       return false; // Indicate failed logout
     }
-  };
+  }, []);
 
-  const handleError = (error) => {
+  const handleError = useCallback((error) => {
     if (error.code === 'auth/email-already-in-use') {
       setError('An account already exists with this email.');
     } else if (error.code === 'auth/weak-password') {
@@ -71,7 +75,7 @@ const useAuth = () => {
       setError('An error occurred during authentication.');
       console.error('Error:', error);
     }
-  };
+  }, []);
 
   return {
     user,
@@ -80,7 +84,7 @@ const useAuth = () => {
     handleLogin,
     handleGoogleSignIn,
     handleLogout,
-    setError, // Exporting setError to manually reset errors in the consuming component if needed
+    setError,
   };
 };
 

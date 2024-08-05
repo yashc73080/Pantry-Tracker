@@ -152,7 +152,7 @@ export default function PantryClient() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [setError]);
 
   useEffect(() => {
     if (itemName) {
