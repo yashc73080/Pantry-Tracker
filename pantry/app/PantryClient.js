@@ -127,6 +127,7 @@ export default function PantryClient() {
     setIsLoading(true);
     setError(null);
     try {
+      console.log('Fetching suggestion for:', itemName);
       const response = await fetch('/api/suggest-description', {
         method: 'POST',
         headers: {
@@ -134,10 +135,12 @@ export default function PantryClient() {
         },
         body: JSON.stringify({ itemName }),
       });
+      console.log('Response status:', response.status);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
+      console.log('Received data:', data);
       if (data.error) {
         throw new Error(data.error);
       }
