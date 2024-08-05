@@ -9,7 +9,7 @@ import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { firestore } from '@/firebase';
 import { collection, query, getDocs, doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import useAuth from './auth';
 
 const style = {
@@ -123,7 +123,7 @@ export default function PantryClient() {
     (selectedFilter === 'All' || item.description === selectedFilter)
   );
 
-  const getSuggestedDescription = async (itemName) => {
+  const getSuggestedDescription = useCallback(async (itemName) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -149,13 +149,13 @@ export default function PantryClient() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (itemName) {
       getSuggestedDescription(itemName);
     }
-  }, [itemName]);
+  }, [itemName, getSuggestedDescription]);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
