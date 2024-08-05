@@ -6,13 +6,25 @@ const openai = new OpenAI({
 });
 
 export async function POST(request) {
+  // Set CORS headers
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
+
+  // Handle preflight request
+  if (request.method === 'OPTIONS') {
+    return new NextResponse(null, { status: 200, headers });
+  }
+
   try {
     const { itemName } = await request.json();
     console.log('Received item name:', itemName);  // Debug log
 
     if (!process.env.OPENAI_API_KEY) {
       console.log('OpenAI API key not configured');  // Debug log
-      return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 });
+      return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500, headers });
     }
 
     const completion = await openai.chat.completions.create({
@@ -33,9 +45,20 @@ export async function POST(request) {
     const suggestion = completion.choices[0].message.content.trim();
     console.log('Generated suggestion:', suggestion);  // Debug log
 
-    return NextResponse.json({ suggestion });
+    return NextResponse.json({ suggestion }, { headers });
   } catch (error) {
     console.error('Error:', error);  // Debug log
-    return NextResponse.json({ error: 'Error generating suggestion', details: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Error generating suggestion', details: error.message }, { status: 500, headers });
   }
+}
+
+export async function OPTIONS() {
+  // Handle OPTIONS request
+  return NextResponse.json({}, {
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
 }

@@ -13,6 +13,19 @@ const useAuth = () => {
     return () => unsubscribe();
   }, []);
 
+  const handleError = useCallback((error) => {
+    if (error.code === 'auth/email-already-in-use') {
+      setError('An account already exists with this email.');
+    } else if (error.code === 'auth/weak-password') {
+      setError('Password should be at least 6 characters.');
+    } else if (error.code === 'auth/invalid-email') {
+      setError('Invalid email.');
+    } else {
+      setError('An error occurred during authentication.');
+      console.error('Error:', error);
+    }
+  }, []);
+
   const handleSignUp = useCallback(async (email, password, onClose) => {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
@@ -21,7 +34,7 @@ const useAuth = () => {
     } catch (error) {
       handleError(error);
     }
-  }, []);
+  }, [handleError]);
 
   const handleLogin = useCallback(async (email, password, onClose) => {
     try {
@@ -31,7 +44,7 @@ const useAuth = () => {
     } catch (error) {
       handleError(error);
     }
-  }, []);
+  }, [handleError]);
 
   const handleGoogleSignIn = useCallback(async (onClose) => {
     try {
@@ -61,19 +74,6 @@ const useAuth = () => {
       setError('Error signing out');
       console.error('Logout error:', error);
       return false; // Indicate failed logout
-    }
-  }, []);
-
-  const handleError = useCallback((error) => {
-    if (error.code === 'auth/email-already-in-use') {
-      setError('An account already exists with this email.');
-    } else if (error.code === 'auth/weak-password') {
-      setError('Password should be at least 6 characters.');
-    } else if (error.code === 'auth/invalid-email') {
-      setError('Invalid email.');
-    } else {
-      setError('An error occurred during authentication.');
-      console.error('Error:', error);
     }
   }, []);
 
