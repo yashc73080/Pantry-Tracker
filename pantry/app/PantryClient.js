@@ -3,7 +3,7 @@
 console.log("PantryClient component loaded");
 
 import { Box, Stack, Typography, Button, Modal, TextField, AppBar, Toolbar, Paper, Chip, IconButton, Badge, Select, 
-        MenuItem, InputLabel, FormControl, Alert } from '@mui/material';
+        MenuItem, InputLabel, FormControl, Alert, CircularProgress } from '@mui/material';
 import { AccountCircle, Search } from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
@@ -42,6 +42,9 @@ export default function PantryClient() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [itemDescription, setItemDescription] = useState('');
+
+  const [suggestedDescription, setSuggestedDescription] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleOpen = () => {
     if (user) {
@@ -87,11 +90,12 @@ export default function PantryClient() {
       const normalizedItem = item.toLowerCase();
       const itemRef = doc(firestore, 'users', user.uid, 'pantry', normalizedItem);
       const docSnap = await getDoc(itemRef);
+      const descriptionToUse = itemDescription || suggestedDescription;
       if (docSnap.exists()) {
         const { count, description } = docSnap.data();
-        await setDoc(itemRef, { count: count + 1, description });
+        await setDoc(itemRef, { count: count + 1, description: description || descriptionToUse });
       } else {
-        await setDoc(itemRef, { count: 1, description: itemDescription });
+        await setDoc(itemRef, { count: 1, description: descriptionToUse });
       }
       await updatePantry();
     }
@@ -103,11 +107,11 @@ export default function PantryClient() {
       const itemRef = doc(firestore, 'users', user.uid, 'pantry', normalizedItem);
       const docSnap = await getDoc(itemRef);
       if (docSnap.exists()) {
-        const { count } = docSnap.data();
+        const { count, description } = docSnap.data();
         if (count === 1) {
           await deleteDoc(itemRef);
         } else {
-          await setDoc(itemRef, { count: count - 1 });
+          await setDoc(itemRef, { count: count - 1, description });
         }
       }
       await updatePantry();
@@ -118,6 +122,40 @@ export default function PantryClient() {
     item.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
     (selectedFilter === 'All' || item.description === selectedFilter)
   );
+
+  const getSuggestedDescription = async (itemName) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/suggest-description', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ itemName }),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      setSuggestedDescription(data.suggestion);
+    } catch (error) {
+      console.error('Error getting suggestion:', error);
+      setError(`Failed to get suggestion: ${error.message}`);
+      setSuggestedDescription('');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (itemName) {
+      getSuggestedDescription(itemName);
+    }
+  }, [itemName]);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -293,25 +331,41 @@ export default function PantryClient() {
             variant="outlined"
             fullWidth
             value={itemName}
-            onChange={(e) => 
-              setItemName(e.target.value)
-            }
+            onChange={(e) => setItemName(e.target.value)}
           />
-          <FormControl fullWidth sx={{ mt: 2 }}>
-            <InputLabel id="description-label">Description</InputLabel>
-            <Select
+          <FormControl fullWidth sx={{ mt: 2, position: 'relative' }}>
+          <InputLabel id="description-label">Description</InputLabel>
+          <Select
             labelId="description-label"
-              value={itemDescription}
-              onChange={(e) => setItemDescription(e.target.value)}
-              label="Description"
-            >
-              <MenuItem value="Fruit">Fruit</MenuItem>
-              <MenuItem value="Vegetable">Vegetable</MenuItem>
-              <MenuItem value="Dairy">Dairy</MenuItem>
-              <MenuItem value="Grain">Grain</MenuItem>
-              <MenuItem value="Other">Other</MenuItem>
-            </Select>
-          </FormControl>
+            value={itemDescription || suggestedDescription}
+            onChange={(e) => setItemDescription(e.target.value)}
+            label="Description"
+            disabled={isLoading}
+          >
+            {suggestedDescription && ( 
+              <MenuItem value={suggestedDescription}>
+                {suggestedDescription}
+              </MenuItem>
+            )}
+            <MenuItem value="Fruit">Fruit</MenuItem>
+            <MenuItem value="Vegetable">Vegetable</MenuItem>
+            <MenuItem value="Dairy">Dairy</MenuItem>
+            <MenuItem value="Grain">Grain</MenuItem>
+            <MenuItem value="Other">Other</MenuItem>
+          </Select>
+            {isLoading && (
+                <CircularProgress
+                size={24}
+                sx={{
+                    position: 'absolute',
+                    top: '50%',
+                    right: 30,
+                    marginTop: '-12px',
+                    marginLeft: '-12px',
+                }}
+                /> 
+            )}
+        </FormControl>
 
           <Button
             variant="contained"
@@ -319,6 +373,7 @@ export default function PantryClient() {
               addItem(itemName);
               setItemName('');
               setItemDescription('');
+              setSuggestedDescription('')
               handleClose();
             }}
             sx={{ mt: 2 }}
