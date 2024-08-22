@@ -1,13 +1,14 @@
-import dynamic from 'next/dynamic';
-import { Analytics } from "@vercel/analytics/react"
+'use client';
 
-const PantryClient = dynamic(() => import('./PantryClient'), { ssr: false });
+import PantryClient from './PantryClient/page';
+import { usePathname } from 'next/navigation';
 
-export default function Home() {
-  return (
-    <>
-      <PantryClient />
-      <Analytics />
-    </>
-  );
-}
+
+const Page = () => {
+  const pathname = usePathname();
+
+  return <PantryClient />;
+
+};
+
+export default Page;

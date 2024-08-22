@@ -10,7 +10,7 @@ import RemoveIcon from '@mui/icons-material/Remove';
 import { firestore } from '@/firebase';
 import { collection, query, getDocs, doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import useAuth from './auth';
+import useAuth from '../auth';
 
 const style = {
   position: 'absolute',
@@ -26,7 +26,7 @@ const style = {
   gap: 3,
 };
 
-export default function PantryClient() {
+const PantryClient = () => {
   const [pantry, setPantry] = useState([]);
   const [open, setOpen] = useState(false);
   const [itemName, setItemName] = useState('');
@@ -427,4 +427,6 @@ export default function PantryClient() {
       </Modal>
     </Box>
   );
-}
+};
+
+export default PantryClient;
